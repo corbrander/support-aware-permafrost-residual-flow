@@ -1,0 +1,117 @@
+project:
+  seed: 20260714
+  data_root: data
+  output_root: outputs
+
+grid:
+  nx: 64
+  ny: 64
+  nz: 48
+  dx: 2.0
+  dy: 2.0
+  dz: 0.25
+  crs: synthetic-local-m
+
+synthetic:
+  n_facies: 7
+  n_boreholes: 8
+  borehole_depth_step: 2
+  borehole_interval_m: 0.50
+  n_ert_profiles: 2
+  ert_x_step: 2
+  ert_z_step: 2
+  ert_cell_width_m: 4.0
+  ert_cell_thickness_m: 0.50
+  n_nmr_points: 180
+  nmr_kernel_radius_m: 1.0
+  n_alt_points: 160
+  noise:
+    eic: 0.03
+    temperature: 0.20
+    log_resistivity: 0.10
+    unfrozen_water: 0.02
+    alt: 0.08
+    correlated_ert: true
+    ert_correlation_length_m: 6.0
+    multiplier: 1.0
+    outlier_fraction: 0.01
+    outlier_scale: 5.0
+    source_bias_log_resistivity: 0.0
+
+paths:
+  synthetic_dir: data/m1_support_guided_benchmark
+  checkpoints_dir: outputs/m1_support_guided/checkpoints
+  figures_dir: outputs/m1_support_guided/figures
+  tables_dir: outputs/m1_support_guided/tables
+  logs_dir: outputs/m1_support_guided/logs
+  predictions_dir: outputs/m1_support_guided/predictions
+
+model:
+  n_facies: 7
+  factorized_channels: 14
+  token_dim: 52
+  n_types: 9
+  n_support_types: 5
+  n_sites: 8
+  n_sources: 16
+  raster_channels: 37
+  latent_channels: 16
+  context_channels: 24
+  width: 32
+  depth: 3
+  modes: [6, 6, 4]
+  attention_hidden: 32
+  attention_chunk: 256
+  support_extent_offset: 21
+  max_condition_tokens: 512
+
+autoencoder:
+  base_channels: 24
+  latent_channels: 16
+  steps: 3000
+  learning_rate: 0.0005
+  weight_decay: 0.000001
+  checkpoint: outputs/m1_support_guided/checkpoints/factorized_autoencoder3d.pt
+
+m1_training:
+  manifest: data/m1_support_guided_benchmark/m1_scene_manifest.json
+  steps: 2500
+  learning_rate: 0.0002
+  weight_decay: 0.000001
+  grad_clip: 1.0
+  amp: bfloat16
+  rf_trees: 24
+  source_ensemble: 2
+  reconstruction_weight: 0.10
+  bias_weight: 0.50
+  flow_weight: 1.0
+  constitutive_weight: 0.02
+  event_weight: 0.20
+  safe_margin: 0.005
+  sampling_steps: 10
+  guidance_strength: 2.0
+  posterior_samples: 64
+  seeds: [41, 42, 43]
+  checkpoint_pattern: outputs/m1_support_guided/checkpoints/support_guided_flow_seed{seed}.pt
+
+calibration:
+  level: 0.90
+  method: complete-borehole-block-conformal
+  within_block_quantile: 0.90
+  min_blocks_per_stratum: 4
+
+evaluation:
+  high_eic_thresholds: [0.20, 0.30, 0.40]
+  noninferiority_margin_eic_rmse: 0.005
+  ood_abstention_quantile: 0.99
+  sequential_initial_boreholes: 3
+  sequential_additions: 5
+  sequential_policies:
+    - random
+    - grid_space_filling
+    - farthest
+    - variance
+    - entropy
+    - high_eic_probability
+    - composite
+    - expected_loss

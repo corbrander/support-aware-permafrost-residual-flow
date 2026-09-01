@@ -1,0 +1,2 @@
+"""Synthetic cryostratigraphy generation."""
+

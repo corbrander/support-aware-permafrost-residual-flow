@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated manuscript."
+type: software
+title: "Support-aware permafrost residual flow"
+version: 0.1.0
+date-released: 2026-09-01
+license: MIT
+authors:
+  - family-names: Ma
+    given-names: Chunqing
+  - family-names: Pei
+    given-names: Wansheng
+  - family-names: Zhang
+    given-names: Mingyi
+  - family-names: Zhou
+    given-names: Zhixiong
+  - family-names: Chen
+    given-names: Yanyan
+

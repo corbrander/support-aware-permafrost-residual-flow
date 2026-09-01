@@ -1,0 +1,139 @@
+schema_version: m1-eg-ablation-v1
+common:
+  benchmark_manifest: data/m1_support_guided_benchmark/m1_scene_manifest.json
+  train_scenes: 500
+  validation_scenes: 100
+  id_test_scenes: 100
+  ood_scenes_per_family: 50
+  seeds: [41, 42, 43]
+  matched_training_steps: 2500
+  posterior_members: 64
+  high_eic_thresholds: [0.20, 0.30, 0.40]
+  primary_field_target: eic
+  noninferiority_margin_eic_rmse: 0.005
+
+ablations:
+  A0:
+    name: tree_prior
+    state: mixed_7_class
+    support: nearest_grid
+    stochastic: false
+  A1:
+    name: support_conditioned_gaussian_geostatistics
+    state: factorized
+    support: explicit
+    covariance: profile_correlated
+    stochastic: true
+    physical_bounds: bounded_anomaly_contraction
+    calibration: validation_only_spatial_block_conformal
+    sensitivity: unconstrained_gaussian_with_invalid_fraction_reported
+  A2:
+    name: legacy_anchor_flow
+    state: mixed_7_class
+    support: nearest_grid
+    covariance: diagonal
+    token_conditioning: false
+    bias_anomaly_decomposition: false
+    guided_sampling: false
+  A3:
+    name: support_raster_flow
+    state: mixed_7_class
+    support: explicit
+    covariance: diagonal
+    token_conditioning: false
+    guided_sampling: false
+  A4:
+    name: support_covariance_flow
+    state: mixed_7_class
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: false
+    guided_sampling: true
+    checkpoint_reuse: A3
+    retraining_required: false
+  A5:
+    name: hybrid_support_encoder
+    state: mixed_7_class
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: false
+  A6:
+    name: noise_conditioned_hybrid
+    state: mixed_7_class
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: true
+  A7:
+    name: factorized_state_hybrid
+    state: factorized_L_S_I
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: true
+  A8:
+    name: safe_bias_anomaly_flow
+    state: factorized_L_S_I
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: true
+    bias_anomaly_decomposition: true
+  A9:
+    name: constitutive_safe_flow
+    state: factorized_L_S_I
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: true
+    bias_anomaly_decomposition: true
+    probabilistic_constitutive: true
+  A10:
+    name: likelihood_guided_safe_flow
+    state: factorized_L_S_I
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: true
+    bias_anomaly_decomposition: true
+    probabilistic_constitutive: true
+    guided_sampling: true
+    checkpoint_reuse: A9
+    retraining_required: false
+  A11:
+    name: full_m1
+    state: factorized_L_S_I
+    support: explicit
+    covariance: profile_correlated
+    token_conditioning: true
+    noise_conditioning: true
+    bias_anomaly_decomposition: true
+    probabilistic_constitutive: true
+    guided_sampling: true
+    high_eic_event_head: true
+    ood_safe_fallback: true
+    block_conformal: true
+
+evaluation_suites:
+  controlled_id:
+    splits: [test_id]
+    metrics: [lithology_miou, thermal_miou, ice_structure_miou, eic_rmse, temperature_rmse, crps, energy_score, coverage_90, interval_width]
+  observation_deletion:
+    modes: [all, no_ert, no_nmr, no_temperature, boreholes_only, half_boreholes, sparse_boreholes]
+  geometry_ood:
+    splits: [ood_abrupt_boundary]
+  constitutive_ood:
+    splits: [ood_altered_eic_coupling, ood_saline_low_resistivity_ice]
+  noise_response:
+    sigma_multipliers: [0.5, 1.0, 2.0, 4.0]
+    metrics: [influence_radius, posterior_mean_shift, posterior_spread, distant_response, normalized_residual]
+  field_transfer:
+    protocol: nested_complete_borehole_loo
+    datasets: [usgs_eic, arcticdata_cryostratigraphy, arcticdata_jago_ground_ice]
+    calibration: complete_borehole_block_conformal
+  sequential_investigation:
+    initial_boreholes: 3
+    additions: 5
+    policies: [random, grid_space_filling, farthest, variance, entropy, high_eic_probability, composite, expected_loss]
+    metrics: [loss_reduction, regret, eic_rmse_reduction, high_eic_error_reduction, interval_width_reduction]

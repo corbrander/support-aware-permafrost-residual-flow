@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "support-aware-permafrost-residual-flow"
+version = "0.1.0"
+description = "Support-aware conditional residual-flow modelling for probabilistic permafrost characterisation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+  {name = "Chunqing Ma"},
+  {name = "Wansheng Pei"},
+  {name = "Mingyi Zhang"},
+  {name = "Zhixiong Zhou"},
+  {name = "Yanyan Chen"},
+]
+dependencies = [
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "Pillow",
+  "PyYAML",
+  "requests",
+  "scikit-learn",
+  "scipy",
+  "torch",
+  "xarray",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["cold_recon*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+

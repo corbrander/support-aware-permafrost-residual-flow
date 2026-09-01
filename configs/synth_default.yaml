@@ -1,0 +1,348 @@
+project:
+  seed: 42
+  data_root: data
+  output_root: outputs
+
+grid:
+  nx: 64
+  ny: 64
+  nz: 48
+  dx: 2.0
+  dy: 2.0
+  dz: 0.25
+  crs: synthetic-local-m
+
+synthetic:
+  n_facies: 7
+  n_boreholes: 8
+  borehole_depth_step: 2
+  n_ert_profiles: 2
+  ert_x_step: 2
+  ert_z_step: 2
+  n_nmr_points: 180
+  n_alt_points: 160
+  noise:
+    eic: 0.03
+    temperature: 0.20
+    log_resistivity: 0.10
+    unfrozen_water: 0.02
+    alt: 0.08
+
+synthetic_benchmark:
+  n_samples: 5
+  seed: 42
+
+paths:
+  synthetic_dir: data/synthetic
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed
+  external_dir: data/external
+  checkpoints_dir: outputs/checkpoints
+  figures_dir: outputs/figures
+  tables_dir: outputs/tables
+  logs_dir: outputs/logs
+  predictions_dir: outputs/predictions
+
+model:
+  token_dim: 16
+  obs_hidden_dim: 96
+  obs_layers: 2
+  obs_heads: 4
+  surface_feature_dim: 8
+  surface_hidden_dim: 32
+  fourier_features: 48
+  implicit_hidden_dim: 192
+  implicit_layers: 5
+  n_facies: 7
+
+observation_graph:
+  enabled: true
+  k_neighbors: 12
+  length_scale_xyz: [0.15, 0.15, 0.25]
+  same_type_bonus: 0.20
+  symmetric: true
+
+observation_graph_ablation:
+  epochs: 12
+  batch_size: 8192
+  device: cuda
+
+training:
+  sample_path: data/synthetic/sample_0000.npz
+  device: cuda
+  epochs: 100
+  batch_size: 8192
+  lr: 0.0008
+  weight_decay: 0.000001
+  loss_weights:
+    facies: 1.0
+    facies_balanced: 1.0
+    eic: 4.0
+    eic_rich: 10.0
+    eic_rich_threshold: 0.25
+    temperature: 0.15
+    unfrozen_water: 0.5
+    resistivity: 0.02
+    heat: 0.001
+    unfrozen_physics: 0.05
+  checkpoint: outputs/checkpoints/implicit_mlp.pt
+  prediction_path: outputs/predictions/implicit_prediction.npz
+
+autoencoder:
+  sample_path: data/synthetic/sample_0000.npz
+  device: cuda
+  epochs: 80
+  lr: 0.001
+  base_channels: 24
+  latent_channels: 16
+  checkpoint: outputs/checkpoints/autoencoder3d.pt
+  reconstruction_path: outputs/predictions/autoencoder_reconstruction.npz
+
+diffusion:
+  sample_path: data/synthetic/sample_0000.npz
+  autoencoder_checkpoint: outputs/checkpoints/autoencoder3d.pt
+  device: cuda
+  epochs: 200
+  lr: 0.0005
+  timesteps: 80
+  denoiser_base_channels: 32
+  posterior_samples: 8
+  sampling_strategy: warm_latent
+  posterior_noise_scale: 0.08
+  posterior_correction_scale: 0.15
+  checkpoint: outputs/checkpoints/latent_diffusion.pt
+  posterior_path: outputs/predictions/diffusion_posterior.npz
+
+multisample_diffusion:
+  n_samples: 5
+  holdout_index: 4
+  device: cuda
+  epochs: 48
+  lr: 0.0004
+  weight_decay: 0.000001
+  timesteps: 80
+  denoiser_base_channels: 32
+  posterior_samples: 8
+  posterior_noise_scale: 0.08
+  posterior_correction_scale: 0.15
+  continuous_proxy_blend: 0.70
+  log_resistivity_proxy_blend: 1.00
+  ice_rich_event_calibration: true
+  ice_rich_event_classes: [3, 6]
+  ice_rich_event_threshold: 0.50
+  ice_rich_eic_floor: 0.31
+  facies_observation_assimilation: true
+  active_borehole_sampling:
+    enabled: true
+    n_boreholes: 3
+    use_active_observations_in_proxy: false
+    depth_step: 2
+    max_depth_m: 4.0
+    min_spacing_cells: 6
+    log_resistivity_weight: 1.0
+    eic_weight: 1.2
+    cold_weight: 0.25
+    dry_weight: 0.20
+    facies_event_weight: 0.35
+  wedge_ice_morphology:
+    enabled: true
+    xy_radius_cells: 1
+    vertical_buffer_cells: 3
+    connect_observed_columns: true
+    max_connection_cells: 0
+  max_condition_tokens: 512
+  grad_clip: 2.0
+  checkpoint: outputs/checkpoints/multisample_latent_diffusion.pt
+  posterior_path: outputs/predictions/multisample_diffusion_holdout.npz
+  metrics_path: outputs/tables/multisample_diffusion_holdout_metrics.csv
+  history_path: outputs/tables/multisample_diffusion_history.csv
+  cv_detail_path: outputs/tables/multisample_diffusion_cv_metrics.csv
+  cv_summary_path: outputs/tables/multisample_diffusion_cv_summary.csv
+  cv_improvement_path: outputs/tables/multisample_diffusion_cv_improvement.csv
+
+fno_operator_diffusion:
+  sample_path: data/synthetic/sample_0000.npz
+  device: cuda
+  epochs: 48
+  lr: 0.0004
+  width: 48
+  depth: 4
+  modes: 8,8,6
+  transformer_layers: 1
+  transformer_heads: 4
+  posterior_samples: 8
+  posterior_noise_scale: 0.08
+  posterior_correction_scale: 0.15
+  checkpoint: outputs/checkpoints/fno_operator_diffusion.pt
+  posterior_path: outputs/predictions/fno_operator_diffusion_posterior.npz
+
+rectified_flow:
+  sample_path: data/synthetic/sample_0000.npz
+  device: cuda
+  epochs: 64
+  batch_size: 4
+  lr: 0.0004
+  weight_decay: 0.000001
+  velocity_base_channels: 32
+  source_noise_scale: 0.18
+  posterior_samples: 8
+  sampling_steps: 16
+  time_scale: 1000
+  checkpoint: outputs/checkpoints/rectified_flow.pt
+  posterior_path: outputs/predictions/rectified_flow_posterior.npz
+
+baseline_unet3d:
+  sample_path: data/synthetic/sample_0000.npz
+  device: cuda
+  epochs: 32
+  base_channels: 12
+  lr: 0.001
+  weight_decay: 0.000001
+  grad_clip: 1.0
+  checkpoint: outputs/checkpoints/baseline_unet3d.pt
+  prediction_path: outputs/predictions/baseline_unet3d.npz
+
+baseline_kriging:
+  length_scale_xyz: [0.22, 0.22, 0.35]
+  signal_variance: 1.0
+  nugget: 0.03
+  max_train_points: 512
+  chunk_size: 32768
+
+baseline_gradient_boosting:
+  max_iter: 180
+  learning_rate: 0.06
+  max_leaf_nodes: 31
+  l2_regularization: 0.001
+  min_samples_leaf: 8
+
+physics_refinement:
+  posterior_path: outputs/predictions/diffusion_posterior_physics_refined.npz
+  temperature_min: -10.0
+  temperature_max: 3.0
+  heat_iterations: 16
+  heat_strength: 0.35
+  heat_anchor: 0.0
+  unfrozen_weight: 0.7
+  resistivity_weight: 0.4
+  eic_max: 0.75
+
+physics_guidance:
+  posterior_path: outputs/predictions/diffusion_posterior_physics_guided.npz
+  samples: 8
+  steps: 6
+  learning_rate: 0.015
+  unfrozen_weight: 0.50
+  resistivity_weight: 0.10
+  heat_weight: 0.0006
+  range_weight: 0.02
+  anchor_weight: 1.0
+  facies_anchor_weight: 1.50
+  eic_anchor_weight: 0.05
+  grad_clip: 1.0
+  temperature_min: -10.0
+  temperature_max: 3.0
+
+physics_training:
+  checkpoint: outputs/checkpoints/latent_diffusion_physics_trained.pt
+  posterior_path: outputs/predictions/diffusion_posterior_physics_trained.npz
+  posterior_samples: 8
+  epochs: 16
+  lr: 0.00008
+  weight_decay: 0.000001
+  noise_weight: 1.0
+  physics_weight: 0.08
+  latent_anchor_weight: 0.05
+  facies_anchor_weight: 0.20
+  continuous_anchor_weight: 0.05
+  grad_clip: 1.0
+
+# Legacy prior-conditioned operator retained for reproducibility of the first
+# manuscript revision. It is superseded by the thermodynamic-projection model
+# below because its training-time physics loss did not change physical residuals.
+prior_conditioned_diffusion_operator:
+  train_scene_indices: [0, 19]
+  calibration_scene_indices: [40, 43]
+  test_scene_indices: [20, 39]
+  residual_checkpoint: outputs/checkpoints/tree_prior_residual_posterior.pt
+  steps: 800
+  lr: 0.0002
+  weight_decay: 0.000001
+  grad_clip: 1.0
+  width: 32
+  depth: 4
+  modes: [6, 6, 4]
+  context_channels: 24
+  timesteps: 80
+  sampling_steps: 20
+  ddim_eta: 0.20
+  posterior_samples: 64
+  rf_trees: 32
+  loss_weights:
+    noise: 1.0
+    latent: 0.05
+    reconstruction: 0.10
+    physics: 0.08
+  physics_subweights:
+    unfrozen: 0.50
+    resistivity: 0.10
+    heat: 0.0006
+    range: 0.02
+  calibration:
+    method: validation_scene_scalar_spread_scaling
+    nominal_coverage: 0.90
+    fit_scenes: 4
+    test_scenes: 20
+
+# Final thermodynamically projected conditional diffusion neural operator.
+# Model fitting uses scenes 0-19. Projection strength and interval scaling are
+# fixed on scenes 40-43. Scenes 20-39 remain untouched until final evaluation.
+thermodynamic_projection_diffusion_operator:
+  train_scene_indices: [0, 19]
+  calibration_scene_indices: [40, 43]
+  test_scene_indices: [20, 39]
+  residual_checkpoint: outputs/checkpoints/tree_prior_residual_posterior.pt
+  checkpoint: outputs/checkpoints/thermodynamic_projection_diffusion_operator.pt
+  steps: 800
+  lr: 0.0002
+  weight_decay: 0.000001
+  grad_clip: 1.0
+  width: 32
+  depth: 4
+  modes: [6, 6, 4]
+  context_channels: 24
+  timesteps: 80
+  sampling_steps: 20
+  ddim_eta: 0.20
+  posterior_samples: 64
+  rf_trees: 32
+  amp: bfloat16
+  fft_precision: float32
+  loss_weights:
+    noise: 1.0
+    latent: 0.05
+    reconstruction: 0.10
+    training_physics: 0.0
+  posterior_mean:
+    mode: anchor_learned_blend
+    learned_correction_gain: 0.03
+    preserves_member_anomalies: true
+  thermodynamic_projection:
+    target: posterior_mean_temperature
+    objective: steady_div_k_grad_T_with_anchor
+    steps: 50
+    learning_rate: 0.002
+    temperature_anchor_weight: 2.0
+    heat_scale: 4.0
+    selection_scenes: [40, 43]
+  calibration:
+    method: validation_scene_scalar_spread_scaling
+    nominal_coverage: 0.90
+    fit_scenes: 4
+    test_scenes: 20
+
+evaluation:
+  ice_rich_threshold: 0.30
+  alt_temperature_threshold: 0.0
+  section_y_index: 32
