@@ -5,6 +5,7 @@ title: "Support-aware permafrost residual flow"
 version: 0.1.0
 date-released: 2026-09-01
 license: MIT
+repository-code: "https://github.com/corbrander/support-aware-permafrost-residual-flow"
 authors:
   - family-names: Ma
     given-names: Chunqing
