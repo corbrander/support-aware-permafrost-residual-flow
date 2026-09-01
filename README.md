@@ -1,8 +1,8 @@
 # Support-aware permafrost residual flow
 
-This repository contains the code used for the manuscript *Support-aware probabilistic three-dimensional characterisation of ice-rich permafrost*.
+This repository contains the code used for the manuscript *Preserving Measurement Support in Probabilistic Three-Dimensional Characterization of Ice-Rich Permafrost*.
 
-The implementation represents borehole intervals, finite-volume geophysical measurements, Gaussian-kernel observations, point measurements, and active-layer crossings through explicit observation operators. A tree-derived reference volume is combined with a deterministic residual and centred stochastic anomalies. The evaluation code includes calibration, out-of-distribution control, support-preserving ablations, public complete-borehole holdouts, and engineering-response diagnostics.
+The implementation represents borehole intervals, finite-volume geophysical measurements, Gaussian-kernel observations, point measurements, and active-layer crossings through explicit observation operators. A tree-derived reference volume is combined with a deterministic residual and centered stochastic anomalies. The evaluation code includes calibration, out-of-distribution control, support-preserving ablations, public complete-borehole holdouts, and engineering-response diagnostics.
 
 ## Repository structure
 
@@ -42,7 +42,7 @@ Build the controlled benchmark:
 python scripts/build_m1_support_guided_benchmark.py --config configs/m1_support_guided.yaml
 ```
 
-Train the factorised autoencoder and the support-aware residual-flow models:
+Train the factorized autoencoder and the support-aware residual-flow models:
 
 ```bash
 python scripts/train_m1_factorized_autoencoder.py --config configs/m1_support_guided.yaml
@@ -66,3 +66,4 @@ The controlled benchmark supports full-volume comparisons. The public-data routi
 ## License
 
 The source code is released under the MIT License. Dataset licenses remain those of the original data providers.
+
