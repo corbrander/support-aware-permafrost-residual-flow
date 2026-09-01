@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "support-aware-permafrost-residual-flow"
 version = "0.1.0"
-description = "Support-aware conditional residual-flow modelling for probabilistic permafrost characterisation"
+description = "Support-aware conditional residual-flow modeling for probabilistic permafrost characterization"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
