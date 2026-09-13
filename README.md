@@ -1,6 +1,6 @@
 # Support-aware permafrost residual flow
 
-This repository contains the code used for the manuscript *Preserving Measurement Support in Probabilistic Three-Dimensional Characterization of Ice-Rich Permafrost*.
+This repository contains the code used for the manuscript *Support-aware probabilistic three-dimensional characterisation of ice-rich permafrost*.
 
 The implementation represents borehole intervals, finite-volume geophysical measurements, Gaussian-kernel observations, point measurements, and active-layer crossings through explicit observation operators. A tree-derived reference volume is combined with a deterministic residual and centered stochastic anomalies. The evaluation code includes calibration, out-of-distribution control, support-preserving ablations, public complete-borehole holdouts, and engineering-response diagnostics.
 
